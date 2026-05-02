@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A luxury botanical product in the catalog.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Skincare", "Haircare", "Body", "Fragrance", "Wellness"] },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "description": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "specs": { "type": "object", "additionalProperties": { "type": "string" } },
+        "stock": { "type": "number" }
+      },
+      "required": ["name", "category", "price", "description", "images", "specs", "stock"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "loyaltyPoints": { "type": "number" },
+        "avatar": { "type": "string" },
+        "addresses": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["email", "name", "loyaltyPoints", "addresses"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An order placed by a user.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date-time" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Shipped", "Delivered", "Cancelled"] }
+      },
+      "required": ["date", "items", "total", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A product or brand review from a registered user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "productId": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "rating", "text", "createdAt"]
+    },
+    "WishlistItem": {
+      "title": "WishlistItem",
+      "description": "A product saved to a user's wishlist.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "addedAt"]
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Public catalog of products."
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "users/{userId}/orders/{orderId}": {
+      "schema": "Order",
+      "description": "User order history."
+    },
+    "users/{userId}/wishlist/{wishlistId}": {
+      "schema": "WishlistItem",
+      "description": "User's personal wishlist."
+    },
+    "reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Public reviews and ratings."
+    }
+  }
+}
