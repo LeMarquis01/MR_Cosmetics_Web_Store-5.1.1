@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'micahndungu01@gmail.com' ||
+        request.auth.token.email == 'member@mrcosmetics.co.ug'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'category', 'price', 'description', 'images', 'specs', 'stock'])
+        && data.keys().size() >= 7
+        && data.name is string && data.name.size() <= 200
+        && data.category in ['Skincare', 'Haircare', 'Body', 'Fragrance', 'Wellness']
+        && data.price is number && data.price >= 0
+        && data.description is string && data.description.size() <= 2000
+        && data.images is list && data.images.size() <= 10 && (data.images.size() == 0 || data.images[0] is string)
+        && data.specs is map
+        && data.stock is number && data.stock >= 0;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'loyaltyPoints', 'addresses'])
+        && data.keys().size() >= 4
+        && data.email == request.auth.token.email
+        && data.name is string && data.name.size() <= 100
+        && data.loyaltyPoints is number && data.loyaltyPoints >= 0
+        && data.addresses is list && data.addresses.size() <= 20
+        && (data.keys().size() == 4 || (data.keys().size() == 5 && data.avatar is string));
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['date', 'items', 'total', 'status'])
+        && data.keys().size() == 4
+        && data.total is number && data.total >= 0
+        && data.status in ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['userId', 'userName', 'rating', 'text', 'createdAt'])
+        && data.keys().size() >= 5
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 100
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.text is string && data.text.size() <= 2000
+        && data.createdAt == request.time
+        && (data.keys().size() == 5 || (data.keys().size() == 6 && (data.userAvatar is string || data.productId is string)) || (data.keys().size() == 7 && data.userAvatar is string && data.productId is string));
+    }
+
+    function isValidWishlistItem(data) {
+      return data.keys().hasAll(['productId', 'addedAt'])
+        && data.keys().size() == 2
+        && data.productId is string
+        && data.addedAt == request.time;
+    }
+
+    // --- Collections ---
+
+    // Connectivity Test
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Admins Collection (Managed by super admins/deployment)
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; // System managed
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidProduct(incoming());
+      allow update: if isAdmin() && isValidProduct(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isEmailVerified() && isValidReview(incoming());
+      allow update: if isOwner(existing().userId) && isValidReview(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'text', 'userName', 'userAvatar'])
+      );
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+
+    // Users
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && isEmailVerified() && isValidUser(incoming());
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
+        // Action: standard profile update
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'avatar', 'addresses', 'loyaltyPoints'])
+      );
+      allow delete: if isAdmin();
+
+      // Orders subcollection
+      match /orders/{orderId} {
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidOrder(incoming());
+        allow update: if isAdmin() && isValidOrder(incoming());
+        allow delete: if isAdmin();
+      }
+
+      // Wishlist subcollection
+      match /wishlist/{wishlistId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidWishlistItem(incoming());
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
