@@ -3,11 +3,16 @@ import { motion } from 'motion/react';
 import { ArrowRight, Leaf, Sparkles, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Import your premium local images
+import skincareImg from '../assets/skincare.jfif';
+import haircareImg from '../assets/haircare.jfif';
+import bodyImg from '../assets/body.jfif';
+
 export default function Home() {
   const categories = [
-    { name: 'Skincare', img: 'https://images.unsplash.com/photo-1596462502278-27bfdc4033c8?auto=format&fit=crop&q=80&w=800', icon: <Leaf size={20} />, alt: 'Woman applying botanical face cream' },
-    { name: 'Haircare', img: 'https://images.unsplash.com/photo-1556228720-da3e3020668b?auto=format&fit=crop&q=80&w=800', icon: <Sparkles size={20} />, alt: 'Lustrous hair ritual' },
-    { name: 'Body', img: 'https://images.unsplash.com/photo-1552693673-1bf958298935?auto=format&fit=crop&q=80&w=800', icon: <ShieldCheck size={20} />, alt: 'Natural wellness supplements' },
+    { name: 'Skincare', img: skincareImg, icon: <Leaf size={20} />, alt: 'Luxury Skincare' },
+    { name: 'Haircare', img: haircareImg, icon: <Sparkles size={20} />, alt: 'Botanical Haircare' },
+    { name: 'Body', img: bodyImg, icon: <ShieldCheck size={20} />, alt: 'Premium Body Wellness' },
   ];
 
   return (
@@ -94,32 +99,24 @@ export default function Home() {
                 src={cat.img} 
                 className="w-full h-full object-cover transition-all duration-[1.5s] group-hover:scale-110 group-hover:rotate-1" 
                 alt={cat.alt}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (cat.name === 'Skincare') target.src = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800';
-                  if (cat.name === 'Haircare') target.src = 'https://images.unsplash.com/photo-1556228720-da3e3020668b?auto=format&fit=crop&q=80&w=800';
-                  if (cat.name === 'Body') target.src = 'https://images.unsplash.com/photo-1552693673-1bf958298935?auto=format&fit=crop&q=80&w=800';
-                }}
-                referrerPolicy="no-referrer"
               />
-              {/* Refined Overlays */}
-              <div className="absolute inset-0 bg-brand-forest/30 group-hover:bg-brand-forest/10 transition-all duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-forest/90 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+              
+              {/* Overlays */}
+              <div className="absolute inset-0 bg-brand-forest/20 group-hover:bg-brand-forest/5 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-forest/80 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
               
               <div className="absolute inset-0 p-10 flex flex-col justify-end">
                 <motion.div 
                   initial={false}
                   className="space-y-6"
                 >
+                  {/* Category Label */}
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-[1px] bg-brand-gold" />
                     <span className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">{cat.name}</span>
                   </div>
                   
-                  <h3 className="text-4xl serif text-white italic leading-tight group-hover:translate-x-2 transition-transform duration-500">
-                    {idx === 0 ? "Ancestral Glow" : idx === 1 ? "Forest Threads" : "Vital Essence"}
-                  </h3>
-
+                  {/* Buttons with only the label you wanted */}
                   <div className="pt-4 overflow-hidden">
                     <div className="inline-flex items-center space-x-4 bg-white/10 backdrop-blur-xl border border-white/20 p-1 rounded-full pr-6 group-hover:bg-brand-gold group-hover:border-brand-gold transition-all duration-500">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-brand-forest group-hover:rotate-45 transition-transform duration-500">
